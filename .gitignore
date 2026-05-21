@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+.Python
+
+# Virtual environment
+venv/
+env/
+
+# Environment variables - NEVER commit this
+.env
+
+# Django
+*.sqlite3
+db.sqlite3
+/staticfiles/
+/mediafiles/
+
+# Django migrations (keep these actually - remove this if you want)
+# */migrations/*.py
+
+# Distribution / packaging
+dist/
+build/
+*.egg-info/
+
+# Testing
+.coverage
+htmlcov/
+.pytest_cache/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
