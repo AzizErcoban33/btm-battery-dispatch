@@ -45,7 +45,14 @@ class SlotResult:
     no_battery_cost_eur: float = 0.0
 
 
-def run_dispatch(timestamps, solar_kws, load_kws, prices) -> List[SlotResult]:
+def run_dispatch(
+    timestamps,
+    solar_kws,
+    load_kws,
+    prices,
+    battery_capacity_kwh: float = BATTERY_CAPACITY_KWH,
+    battery_max_power_kw: float = BATTERY_MAX_POWER_KW,
+) -> List[SlotResult]:
     """
     Run greedy battery dispatch over a week of 15-min slots.
     
@@ -82,16 +89,16 @@ def run_dispatch(timestamps, solar_kws, load_kws, prices) -> List[SlotResult]:
         # --- Step 2: Surplus solar charges battery ---
         if remaining_solar > 0:
             # How much space is left in the battery?
-            soc_headroom = (SOC_MAX - soc) * BATTERY_CAPACITY_KWH / INTERVAL_HOURS
+            soc_headroom = (SOC_MAX - soc) * battery_capacity_kwh / INTERVAL_HOURS
             # Cap by max charge power
-            max_charge_kw = min(BATTERY_MAX_POWER_KW, soc_headroom)
+            max_charge_kw = min(battery_max_power_kw, soc_headroom)
             # Cap by available solar
             charge_kw = min(remaining_solar, max_charge_kw)
             charge_kw = max(charge_kw, 0.0)
 
             # Energy actually stored (efficiency loss on the way in)
             energy_stored_kwh = charge_kw * INTERVAL_HOURS * (ROUND_TRIP_EFFICIENCY ** 0.5)
-            soc += energy_stored_kwh / BATTERY_CAPACITY_KWH
+            soc += energy_stored_kwh / battery_capacity_kwh
 
             result.solar_to_battery_kw = charge_kw
             remaining_solar -= charge_kw
@@ -102,14 +109,14 @@ def run_dispatch(timestamps, solar_kws, load_kws, prices) -> List[SlotResult]:
         # --- Step 4: Battery discharges to cover remaining load ---
         if remaining_load > 0:
             # How much energy can we actually take out?
-            soc_available = (soc - SOC_MIN) * BATTERY_CAPACITY_KWH / INTERVAL_HOURS
-            max_discharge_kw = min(BATTERY_MAX_POWER_KW, soc_available)
+            soc_available = (soc - SOC_MIN) * battery_capacity_kwh / INTERVAL_HOURS
+            max_discharge_kw = min(battery_max_power_kw, soc_available)
             discharge_kw = min(remaining_load, max_discharge_kw)
             discharge_kw = max(discharge_kw, 0.0)
 
             # Energy removed from battery (efficiency loss on the way out)
             energy_removed_kwh = discharge_kw * INTERVAL_HOURS / (ROUND_TRIP_EFFICIENCY ** 0.5)
-            soc -= energy_removed_kwh / BATTERY_CAPACITY_KWH
+            soc -= energy_removed_kwh / battery_capacity_kwh
 
             result.battery_to_load_kw = discharge_kw
             remaining_load -= discharge_kw

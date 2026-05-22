@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>What-If Analysis</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #7c3aed 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            font-weight: 700;
+        }
+
+        .header p {
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        .section-title {
+            font-size: 1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+        /* ── Form ── */
+        .form-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 32px;
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr auto;
+            gap: 16px;
+            align-items: end;
+        }
+
+        .form-group label {
+            display: block;
+            font-size: 0.85em;
+            font-weight: 600;
+            color: #475569;
+            margin-bottom: 6px;
+        }
+
+        .form-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            font-size: 1em;
+            color: #1e293b;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        .form-group input:focus {
+            border-color: #7c3aed;
+        }
+
+        .form-group .hint {
+            font-size: 0.75em;
+            color: #94a3b8;
+            margin-top: 4px;
+        }
+
+        button[type=submit] {
+            background: #7c3aed;
+            color: white;
+            border: none;
+            padding: 11px 28px;
+            border-radius: 8px;
+            font-size: 1em;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+            white-space: nowrap;
+        }
+
+        button[type=submit]:hover {
+            background: #6d28d9;
+        }
+
+        /* ── Stat Cards ── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+        }
+
+        .card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #7c3aed;
+            line-height: 1.1;
+        }
+
+        .card .label {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        .card.saving {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .card.saving .value {
+            color: #16a34a;
+        }
+
+        .card.better {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .card.better .value {
+            color: #16a34a;
+        }
+
+        .card.worse {
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+
+        .card.worse .value {
+            color: #dc2626;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 32px 0;
+        }
+
+        /* ── Chart Card ── */
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .chart-card h2 {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 20px;
+        }
+
+        /* ── Back link ── */
+        .back {
+            margin-bottom: 24px;
+        }
+
+        .back a {
+            color: #7c3aed;
+            text-decoration: none;
+            font-size: 0.9em;
+            font-weight: 500;
+        }
+
+        .back a:hover {
+            text-decoration: underline;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8em;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>🔬 What-If Analysis</h1>
+        <p>Vary battery size and PV capacity — see how weekly saving shifts</p>
+    </div>
+
+    <div class="container">
+
+        <div class="back">
+            <a href="/reports/weekly/">← Back to Weekly Report</a>
+        </div>
+
+        <div class="form-card">
+            <p class="section-title">System Parameters</p>
+            <form method="GET" action="/reports/whatif/">
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Battery Capacity (kWh)</label>
+                        <input type="number" name="battery_kwh" value="{{ battery_kwh }}" min="100" max="2000"
+                            step="100">
+                        <div class="hint">Baseline: 400 kWh</div>
+                    </div>
+                    <div class="form-group">
+                        <label>PV System Size (kWp)</label>
+                        <input type="number" name="pv_kw" value="{{ pv_kw }}" min="50" max="1000" step="50">
+                        <div class="hint">Baseline: 200 kWp</div>
+                    </div>
+                    <button type="submit">Run Simulation →</button>
+                </div>
+            </form>
+        </div>
+
+        <p class="section-title">
+            Results — {{ battery_kwh }} kWh Battery / {{ pv_kw }} kWp PV
+        </p>
+        <div class="stats">
+            <div class="card">
+                <div class="value">€{{ total_no_battery_cost }}</div>
+                <div class="label">Grid cost without battery</div>
+            </div>
+            <div class="card">
+                <div class="value">€{{ total_grid_cost }}</div>
+                <div class="label">Grid cost with battery</div>
+            </div>
+            <div class="card saving">
+                <div class="value">€{{ total_saving }}</div>
+                <div class="label">Weekly saving</div>
+            </div>
+        </div>
+
+        <div class="stats">
+            <div class="card">
+                <div class="value">€{{ baseline_saving }}</div>
+                <div class="label">Baseline saving (400 kWh / 200 kWp)</div>
+            </div>
+            <div class="card {% if saving_delta >= 0 %}better{% else %}worse{% endif %}">
+                <div class="value">
+                    {% if saving_delta >= 0 %}+{% endif %}€{{ saving_delta }}
+                </div>
+                <div class="label">
+                    vs baseline —
+                    {% if saving_delta >= 0 %}better{% else %}worse{% endif %}
+                </div>
+            </div>
+            <div class="card">
+                <div class="value">{{ self_consumption_pct }}%</div>
+                <div class="label">Solar self-consumption</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="chart-card">
+            <h2>🔋 Battery State of Charge — {{ battery_kwh }} kWh Battery</h2>
+            <canvas id="socChart" height="100"></canvas>
+        </div>
+
+        <div class="footer">
+            <p>Generated by BTM Battery Dispatch · Neura Energy</p>
+            <p>Aziz Ercoban</p>
+        </div>
+
+    </div>
+
+    <script>
+        var labels = {{ chart_labels| safe }};
+        var socData = {{ soc_data| safe }};
+
+        var sparseLabels = labels.map(function (l, i) {
+            return i % 4 === 0 ? l.slice(11, 16) : '';
+        });
+
+        new Chart(document.getElementById('socChart'), {
+            type: 'line',
+            data: {
+                labels: sparseLabels,
+                datasets: [{
+                    label: 'SoC (%)',
+                    data: socData,
+                    borderColor: '#7c3aed',
+                    backgroundColor: 'rgba(124, 58, 237, 0.08)',
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function (items) { return labels[items[0].dataIndex]; },
+                            label: function (item) { return 'SoC: ' + item.raw + '%'; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0, max: 100,
+                        ticks: { callback: function (v) { return v + '%'; } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+
+</body>
+
+</html>
