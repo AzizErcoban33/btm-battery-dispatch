@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weekly Battery Report</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            min-height: 100vh;
+        }
+
+        /* ── Header ── */
+        .header {
+            background: linear-gradient(135deg, #1e3a5f 0%, #2563eb 100%);
+            color: white;
+            padding: 40px 0;
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .header h1 {
+            font-size: 2em;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+        }
+
+        .header p {
+            margin-top: 8px;
+            opacity: 0.8;
+            font-size: 1em;
+        }
+
+        /* ── Layout ── */
+        .container {
+            max-width: 960px;
+            margin: 0 auto;
+            padding: 0 24px 60px;
+        }
+
+        .section-title {
+            font-size: 1em;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #64748b;
+            margin-bottom: 16px;
+        }
+
+        /* ── Stat Cards ── */
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 16px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px 20px;
+            text-align: center;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            transition: transform 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+
+        .card .value {
+            font-size: 2em;
+            font-weight: 700;
+            color: #2563eb;
+            line-height: 1.1;
+        }
+
+        .card .label {
+            margin-top: 8px;
+            color: #64748b;
+            font-size: 0.85em;
+        }
+
+        /* ── Saving card green ── */
+        .card.saving {
+            border-color: #bbf7d0;
+            background: #f0fdf4;
+        }
+
+        .card.saving .value {
+            color: #16a34a;
+        }
+
+        /* ── Divider ── */
+        .divider {
+            height: 1px;
+            background: #e2e8f0;
+            margin: 32px 0;
+        }
+
+        /* ── Chart Cards ── */
+        .chart-card {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            margin-bottom: 24px;
+        }
+
+        .chart-card h2 {
+            font-size: 1.1em;
+            font-weight: 600;
+            color: #1e293b;
+            margin-bottom: 20px;
+        }
+
+        /* ── Footer ── */
+        .footer {
+            text-align: center;
+            color: #94a3b8;
+            font-size: 0.8em;
+            margin-top: 40px;
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="header">
+        <h1>⚡ Weekly Battery Report</h1>
+        <p>Limassol Hotel — 1–7 July 2024</p>
+    </div>
+
+    <div class="container" data-no-battery="{{ total_no_battery_cost }}" data-battery="{{ total_grid_cost }}"
+        data-saving="{{ total_saving }}" data-charged="{{ total_charged_kwh }}"
+        data-discharged="{{ total_discharged_kwh }}" data-self-consumption="{{ self_consumption_pct }}">
+
+        <p class="section-title">Cost Summary</p>
+        <div class="stats">
+            <div class="card">
+                <div class="value" id="no-battery-cost">€{{ total_no_battery_cost }}</div>
+                <div class="label">Grid cost without battery</div>
+            </div>
+            <div class="card">
+                <div class="value" id="battery-cost">€{{ total_grid_cost }}</div>
+                <div class="label">Grid cost with battery</div>
+            </div>
+            <div class="card saving">
+                <div class="value" id="saving">€{{ total_saving }}</div>
+                <div class="label">Weekly saving</div>
+            </div>
+        </div>
+
+        <p class="section-title">Battery Activity</p>
+        <div class="stats">
+            <div class="card">
+                <div class="value" id="charged">{{ total_charged_kwh }} kWh</div>
+                <div class="label">Charged from solar</div>
+            </div>
+            <div class="card">
+                <div class="value" id="discharged">{{ total_discharged_kwh }} kWh</div>
+                <div class="label">Discharged to load</div>
+            </div>
+            <div class="card">
+                <div class="value" id="self-consumption">{{ self_consumption_pct }}%</div>
+                <div class="label">Solar self-consumption</div>
+            </div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- SoC Chart -->
+        <div class="chart-card">
+            <h2>🔋 Battery State of Charge (%)</h2>
+            <canvas id="socChart" height="100"></canvas>
+        </div>
+
+        <!-- Daily Energy Chart -->
+        <div class="chart-card">
+            <h2>📊 Daily Energy Summary (kWh)</h2>
+            <canvas id="powerChart" height="100"></canvas>
+        </div>
+
+        <div class="footer">
+            <p>Generated by BTM Battery Dispatch · Neura Energy</p>
+            <p>Aziz Ercoban</p>
+        </div>
+
+    </div>
+
+    <script>
+        // ── Data passed from Django view ──
+        var labels = {{ chart_labels| safe }};
+        var socData = {{ soc_data| safe }};
+        var solarData = {{ solar_data| safe }};
+        var loadData = {{ load_data| safe }};
+        var gridData = {{ grid_data| safe }};
+
+        // Show only every 4th label (hourly) to avoid clutter
+        var sparseLabels = labels.map(function (l, i) {
+            return i % 4 === 0 ? l.slice(11, 16) : '';
+        });
+
+        // ── SoC Chart ──
+        new Chart(document.getElementById('socChart'), {
+            type: 'line',
+            data: {
+                labels: sparseLabels,
+                datasets: [{
+                    label: 'SoC (%)',
+                    data: socData,
+                    borderColor: '#2563eb',
+                    backgroundColor: 'rgba(37, 99, 235, 0.08)',
+                    fill: true,
+                    pointRadius: 0,
+                    borderWidth: 2,
+                    tension: 0.3
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            title: function (items) { return labels[items[0].dataIndex]; },
+                            label: function (item) { return 'SoC: ' + item.raw + '%'; }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        min: 0,
+                        max: 100,
+                        ticks: { callback: function (v) { return v + '%'; } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // ── Daily Summary Bar Chart ──
+        var dailyLabels = ['Mon 1 Jul', 'Tue 2 Jul', 'Wed 3 Jul', 'Thu 4 Jul', 'Fri 5 Jul', 'Sat 6 Jul', 'Sun 7 Jul'];
+        var dailySolar = [], dailyLoad = [], dailyGrid = [];
+
+        for (var d = 0; d < 7; d++) {
+            var start = d * 96;
+            var end = start + 96;
+            var solar = 0, load = 0, grid = 0;
+            for (var i = start; i < end && i < solarData.length; i++) {
+                solar += solarData[i] * 0.25;
+                load += loadData[i] * 0.25;
+                grid += gridData[i] * 0.25;
+            }
+            dailySolar.push(Math.round(solar));
+            dailyLoad.push(Math.round(load));
+            dailyGrid.push(Math.round(grid));
+        }
+
+        new Chart(document.getElementById('powerChart'), {
+            type: 'bar',
+            data: {
+                labels: dailyLabels,
+                datasets: [
+                    {
+                        label: 'Solar Generated (kWh)',
+                        data: dailySolar,
+                        backgroundColor: 'rgba(245, 158, 11, 0.8)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Hotel Load (kWh)',
+                        data: dailyLoad,
+                        backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                        borderRadius: 6
+                    },
+                    {
+                        label: 'Grid Draw (kWh)',
+                        data: dailyGrid,
+                        backgroundColor: 'rgba(239, 68, 68, 0.8)',
+                        borderRadius: 6
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: { position: 'top' },
+                    tooltip: {
+                        callbacks: {
+                            label: function (item) {
+                                return item.dataset.label + ': ' + item.raw + ' kWh';
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: { callback: function (v) { return v + ' kWh'; } },
+                        grid: { color: 'rgba(0,0,0,0.05)' }
+                    },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // ── Animated counters ──
+        function animateCounter(element, target, prefix, suffix, duration) {
+            prefix = prefix || '';
+            suffix = suffix || '';
+            duration = duration || 1500;
+            var startTime = null;
+
+            function update(currentTime) {
+                if (!startTime) startTime = currentTime;
+                var elapsed = currentTime - startTime;
+                var progress = Math.min(elapsed / duration, 1);
+                var eased = 1 - Math.pow(1 - progress, 3);
+                var current = (eased * target).toFixed(1);
+                element.textContent = prefix + current + suffix;
+                if (progress < 1) requestAnimationFrame(update);
+            }
+            requestAnimationFrame(update);
+        }
+
+        window.addEventListener('load', function () {
+            var c = document.querySelector('.container');
+            animateCounter(document.getElementById('no-battery-cost'), parseFloat(c.dataset.noBattery), '€');
+            animateCounter(document.getElementById('battery-cost'), parseFloat(c.dataset.battery), '€');
+            animateCounter(document.getElementById('saving'), parseFloat(c.dataset.saving), '€');
+            animateCounter(document.getElementById('charged'), parseFloat(c.dataset.charged), '', ' kWh');
+            animateCounter(document.getElementById('discharged'), parseFloat(c.dataset.discharged), '', ' kWh');
+            animateCounter(document.getElementById('self-consumption'), parseFloat(c.dataset.selfConsumption), '', '%');
+        });
+    </script>
+
+</body>
+
+</html>
